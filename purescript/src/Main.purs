@@ -7,13 +7,14 @@ import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Class (liftEff)
 import Control.Monad.Eff.Console (CONSOLE, log)
 import Control.Monad.Eff.Exception (EXCEPTION)
-import Network.HTTP.Affjax (AJAX, Affjax, AffjaxRequest, URL, defaultRequest, post, affjax)
+import Network.HTTP.Affjax (AJAX, Affjax, AffjaxRequest, URL, defaultRequest, affjax, post)
 
 
 import Data.Either (Either(..), either)
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..))
 import Network.HTTP.RequestHeader (RequestHeader(..))
+import Network.HTTP.Affjax.Request (class Requestable)
 import Web.Cookies (COOKIE, getCookie)
 
 import Data.Argonaut.Core (jsonEmptyObject)
@@ -21,12 +22,14 @@ import Data.Argonaut.Decode (class DecodeJson, decodeJson, (.?))
 import Data.Argonaut.Encode (class EncodeJson, encodeJson, (:=), (~>))
 import Network.HTTP.Affjax.Response (class Respondable)
 
-import Pux.DOM.Events (DOMEvent, onClick, onChange, onSubmit, targetValue)
+import Pux.DOM.Events (DOMEvent, onClick, onChange, targetValue)
 import Pux.DOM.HTML (HTML)
 import Pux.Renderer.React (renderToDOM)
-import Text.Smolder.HTML (button, div, input, form)
-import Text.Smolder.HTML.Attributes (name, type', value)
+import Text.Smolder.HTML (button, div, input)
+import Text.Smolder.HTML.Attributes (type', value)
 import Text.Smolder.Markup (text, (!), (#!))
+
+import Data.MediaType
 
 
 import Pux (CoreEffects, EffModel, start, noEffects)
@@ -93,6 +96,8 @@ authorizedPost url = authorizedRequest POST url
 authPost :: forall e b. Respondable b => URL -> String -> Affjax e b
 authPost url content = affjax $ defaultRequest { method = Left POST, url = url, content = Just ( content)}
 
+ppPost :: forall e b. Respondable b => URL -> String -> Affjax e b
+ppPost url content = affjax $ defaultRequest { method = Left POST, url = url, content = Just ( content), headers = [Accept (MediaType "*/*"), ContentType (MediaType "application/json")]}
 
 
 data Event = Echo
@@ -116,8 +121,11 @@ foldp Echo state =
   }
 foldp SignIn st = 
   { state : st
-    , effects : [do 
-      res <- attempt (post "/login" (show $ encodeJson $ Login {username: st.username, password: st.password}))
+    , effects : [do
+      let login = (show $ encodeJson $ Login {username: st.username, password: st.password})
+      res <- attempt (ppPost "/login" login)
+      --res <- attempt (post "/login" (show $ encodeJson $ Login {username: st.username, password: st.password}))
+      -- res <- attempt (affjax $ defaultRequest { method = Left POST, url = "/login", content = Just login })
       let decode r = decodeJson r.response :: Either String String
       let todos = either (Left <<< show) decode res
       pure Nothing 
@@ -126,19 +134,17 @@ foldp SignIn st =
 foldp (UsernameChange ev) st = noEffects $ st { username = targetValue ev }
 foldp (PasswordChange ev) st = noEffects $ st { password = targetValue ev }
 
---foldp Increment n = { state: n + 1, effects: [ log ("increment " <> show n) *> pure Nothing ] }
---foldp Decrement n = { state: n - 1, effects: [] }
-
 -- | Return markup from the state
 view :: State -> HTML Event
 view state = do
   div $
     button #! onClick (const Echo) $ text "Echo"
     
-  form ! name "signin" #! onSubmit (const SignIn) $ do
+  --form ! name "signin" #! onSubmit (const SignIn) $ do
+  div do
     input ! type' "text" ! value state.username #! onChange UsernameChange
     input ! type' "password" ! value state.password #! onChange PasswordChange
-    button ! type' "submit" $ text "Sign In"
+    button #! onClick (const SignIn) $ text "Sign In"
 
 init :: State
 init = { username : "", password : "" }

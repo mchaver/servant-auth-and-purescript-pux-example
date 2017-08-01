@@ -102,7 +102,6 @@ unprotected cs jwts =
   loginH :<|> staticH
   where
     loginH              = checkCreds cs jwts
-    -- staticH             = serveDirectoryFileServer staticDir　
     staticH             = serveDirectoryWith $ set
       where
         set = (defaultWebAppSettings $ error "unused") { ssLookupFile = ssLookupFile embedded, ssIndices = map unsafeToPiece ["index.html"] }
@@ -115,6 +114,7 @@ checkCreds :: CookieSettings
                                 , Header "Set-Cookie" SetCookie]
                                NoContent)
 checkCreds cookieSettings jwtSettings (Login loginUserIdent loginUserPassword) = do
+  liftIO $ putStrLn "checkCreds"
   let mUser = 
         case loginUserIdent == "test@test.com" && loginUserPassword == "password" of
           True -> Just $ User 1 "test@test.com" "test"

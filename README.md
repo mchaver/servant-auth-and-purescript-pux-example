@@ -1,7 +1,9 @@
-# servant-auth-and-elm-example
+# servant-auth-and-purescript-pux-example 
 
 
 ```
 stack build
-stack exec servant-auth-and-elm-example 
+stack exec servant-auth-and-purescript-pux-example 
+
+pulp browserify --optimise > index.js
 ```
