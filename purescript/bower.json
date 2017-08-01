@@ -1,0 +1,19 @@
+{
+  "name": "servant-auth-purescript-pux-example",
+  "homepage": "https://github.com/mchaver/servant-auth-purescript-pux-example",
+  "authors": [
+    "<mchaver@gmail.com>"
+  ],
+  "description": "Starter Servant AUth and Pux application using webpack with hot-reloading.",
+  "main": "support/entry.client.js",
+  "license": "BSD3",
+  "dependencies": {
+    "purescript-pux": "^10.0.0",
+    "purescript-css": "^3.0.0",
+    "purescript-aff": "^3.0.0",
+    "purescript-affjax": "^4.0.0",
+    "purescript-argonaut-core": "^3.0.0",
+    "purescript-argonaut-codecs": "^3.2.0",
+    "purescript-cookies": "git://github.com/mchaver/purescript-cookies.git#d0f602a3b808b7b218e56f10e9a61c2dcf3f43c7"
+  }
+}
