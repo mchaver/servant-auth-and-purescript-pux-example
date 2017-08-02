@@ -1,8 +1,4 @@
 import Distribution.Simple
-main = defaultMain
-
-{-
-import Distribution.Simple
 import System.Directory (doesDirectoryExist, setCurrentDirectory)
 import System.Process
 import System.IO (hPutStrLn, stderr)
@@ -18,28 +14,45 @@ toolExists str =
 
 main :: IO ()
 main = do
-  elmMakeExists <- toolExists "elm-make"
-  if elmMakeExists
+  pulpExists <- toolExists "pulp"
+  if pulpExists
     then do
-      elmExists <- doesDirectoryExist "elm"
-      if elmExists
+      purescriptExists <- doesDirectoryExist "purescript"
+      if purescriptExists
         then do 
-          setCurrentDirectory "elm"
+          setCurrentDirectory "purescript"
 
           hPutStrLn stderr ""
-          hPutStrLn stderr "Building elm/src/Main.elm"
+          hPutStrLn stderr "Building purescript/src"
           hPutStrLn stderr "=========================\n"
-          rawSystem "elm-make" ["src/Main.elm", "--output=../static/index.html"]
-          
+          rawSystem "pulp" ["browserify", "--optimise", "--to", "index.js"]
+          indexJs <- readFile "index.js"
+          let indexHtmlContents = unlines 
+                [ "<!DOCTYPE html>"
+                , "<html>"
+                , "<head>"
+                , "  <meta charset=\"UTF-8\"/>"
+                , "  <meta http-equiv=\"Content-type\" content=\"text/html; charset=utf-8\"/>"
+                , "  <title>Servant Auth and Purescript Pux Example</title>"
+                , "</head>"
+                , "<body>"
+                , "  <div name=\"app\" id=\"app\"></div>"
+                , "  <script type=\"text/javascript\">"
+                , indexJs
+                , "  </script>"
+                , "</body>"
+                , "</html>"
+                ]
+          writeFile "../static/index.html" indexHtmlContents
+              
           setCurrentDirectory ".."
           
           hPutStrLn stderr ""
-          hPutStrLn stderr "Compiling servant-auth-and-elm-example"
+          hPutStrLn stderr "Compiling servant-auth-and-purescript-pux-example"
           hPutStrLn stderr "======================================\n"
           defaultMain
-          hPutStrLn stderr "servant-auth-and-elm-example build is complete."
+          hPutStrLn stderr "servant-auth-and-purescript-pux-example build is complete."
         else do 
-          hPutStrLn stderr "Unable to find the elm "
+          hPutStrLn stderr "Unable to find the purescript directory."
     else do
-      hPutStrLn stderr "Unable to complete servant-auth-and-elm-example build.\n Setup.hs cannot find 'elm-make'. Make sure it is installed in your system and available on PATH."
--}
+      hPutStrLn stderr "Unable to complete servant-auth-and-purescript-pux-example build.\n Setup.hs cannot find 'pulp'. Make sure it is installed in your system and available on PATH."
