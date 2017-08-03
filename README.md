@@ -9,6 +9,7 @@ cd purescript
 bower install
 npm install
 cd ..
+
 stack build
 stack exec app
 ```
