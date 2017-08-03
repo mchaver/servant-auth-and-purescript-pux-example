@@ -2,8 +2,7 @@ module Main where
 
 import Prelude hiding (div)
 
-import Control.Monad.Aff (Aff,attempt, launchAff)
-import Control.Monad.Aff.Class (liftAff)
+import Control.Monad.Aff (attempt, launchAff)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Class (liftEff)
 import Control.Monad.Eff.Console (CONSOLE, log)
@@ -104,7 +103,6 @@ data Event = UsernameChange DOMEvent
            | SignIn
            | RollDie
            | IsLoggedIn
-           | Echo
            
 type State = 
   { username :: String
@@ -113,13 +111,6 @@ type State =
 
 -- | Return a new state (and effects) from each event
 foldp :: Event -> State -> EffModel State Event (ajax :: AJAX, console :: CONSOLE, cookie :: COOKIE)
-foldp Echo st =
-  { state : st 
-  , effects : [do 
-    liftEff $ log "Echo"
-    pure $ Just Echo
-  ]}
-
 foldp RollDie st = 
   { state : st
   , effects : [ do 
@@ -162,16 +153,12 @@ foldp IsLoggedIn st =
           let decode r = decodeJson r.response :: Either String User
               eUser = either (Left <<< show) decode res
           pure unit
-          -- liftEff $ log $ show todos
-      --foldp IsLoggedIn st
       pure Nothing      
     ]
   }
 -- | Return markup from the state
 view :: State -> HTML Event
 view state = do
-  div do 
-    button #! onClick (const Echo) $ text "Echo"
   div do
     div do
       label $ text "email"
@@ -188,24 +175,24 @@ init :: State
 init = { username : "", password : "" }
 
 -- | Start and render the app
-main :: Eff (CoreEffects (ajax :: AJAX, console :: CONSOLE, cookie :: COOKIE)) Unit
-main =  do
-{-
-  mReq <- mkAuthRequest
-  void $ launchAff do 
-      case mReq of
+main :: Eff (CoreEffects (ajax :: AJAX, console :: CONSOLE, cookie :: COOKIE, exception :: EXCEPTION)) Unit
+main =  void $ launchAff do
+
+  mReq <- liftEff mkAuthRequest
+ 
+  newInit <- case mReq of
         Nothing -> pure init
         Just req -> do             
           res <- attempt $ authorizedGet req "/loggedin"
           let decode r = decodeJson r.response :: Either String String
           let todos = either (Left <<< show) decode res
           pure init
--}
-  app <- start
-          { initialState: init
+
+  app <- liftEff $ start
+          { initialState: newInit
           , view
           , foldp
           , inputs: []
           }
   
-  renderToDOM "#app" app.markup app.input
+  liftEff $ renderToDOM "#app" app.markup app.input
