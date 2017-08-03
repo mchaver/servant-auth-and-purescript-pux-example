@@ -1,13 +1,3 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8"/>
-  <meta http-equiv="Content-type" content="text/html; charset=utf-8"/>
-  <title>Servant Auth and Purescript Pux Example</title>
-</head>
-<body>
-  <div name="app" id="app"></div>
-  <script type="text/javascript">
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 'use strict';
 
@@ -26796,7 +26786,3 @@ process.chdir = function (dir) {
 process.umask = function() { return 0; };
 
 },{}]},{},[192]);
-
-  </script>
-</body>
-</html>

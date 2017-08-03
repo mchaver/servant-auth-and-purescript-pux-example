@@ -102,7 +102,6 @@ unprotected cs jwts =
   loginH :<|> staticH
   where
     loginH              = checkCreds cs jwts
-    -- staticH             = serveDirectoryFileServer staticDir　
     staticH             = serveDirectoryWith $ set
       where
         set = (defaultWebAppSettings $ error "unused") { ssLookupFile = ssLookupFile embedded, ssIndices = map unsafeToPiece ["index.html"] }

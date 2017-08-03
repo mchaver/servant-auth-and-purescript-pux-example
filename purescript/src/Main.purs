@@ -5,31 +5,32 @@ import Prelude hiding (div)
 import Control.Monad.Aff (attempt, launchAff)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Class (liftEff)
-import Control.Monad.Eff.Console (CONSOLE, log)
-import Control.Monad.Eff.Exception (EXCEPTION)
-import Network.HTTP.Affjax (AJAX, Affjax, AffjaxRequest, URL, defaultRequest, post, affjax)
-
-
-import Data.Either (Either(..), either)
-import Data.HTTP.Method (Method(..))
-import Data.Maybe (Maybe(..))
-import Network.HTTP.RequestHeader (RequestHeader(..))
-import Web.Cookies (COOKIE, getCookie)
+import Control.Monad.Eff.Console (CONSOLE)
+import Control.Monad.Eff.Exception (Error, EXCEPTION)
 
 import Data.Argonaut.Core (jsonEmptyObject)
 import Data.Argonaut.Decode (class DecodeJson, decodeJson, (.?))
 import Data.Argonaut.Encode (class EncodeJson, encodeJson, (:=), (~>))
-import Network.HTTP.Affjax.Response (class Respondable)
+import Data.Either (Either(..), either)
+import Data.HTTP.Method (Method(..))
+import Data.Maybe (Maybe(..))
+import Data.MediaType (MediaType(..))
 
-import Pux.DOM.Events (DOMEvent, onClick, onChange, onSubmit, targetValue)
+import Network.HTTP.Affjax (AJAX, Affjax, AffjaxResponse, AffjaxRequest, URL, defaultRequest, affjax)
+import Network.HTTP.Affjax.Response (class Respondable)
+import Network.HTTP.RequestHeader (RequestHeader(..))
+import Network.HTTP.StatusCode (StatusCode(..))
+
+import Pux (CoreEffects, EffModel, noEffects, onlyEffects, start)
+import Pux.DOM.Events (DOMEvent, onClick, onChange, targetValue)
 import Pux.DOM.HTML (HTML)
 import Pux.Renderer.React (renderToDOM)
-import Text.Smolder.HTML (button, div, input, form)
-import Text.Smolder.HTML.Attributes (name, type', value)
+
+import Text.Smolder.HTML (button, div, label, input, span)
+import Text.Smolder.HTML.Attributes (type', value)
 import Text.Smolder.Markup (text, (!), (#!))
 
-
-import Pux (CoreEffects, EffModel, start, noEffects)
+import Web.Cookies (COOKIE, deleteCookie, getCookie)
 
 data User = User 
   { id    :: Int
@@ -67,89 +68,140 @@ instance encodeJsonLogin :: EncodeJson Login where
     ~> "password" := login.password
     ~> jsonEmptyObject
 
-
 mkAuthRequest :: forall eff. Eff (cookie :: COOKIE | eff) (Maybe (AffjaxRequest Unit))
 mkAuthRequest = do
   mCook <- liftEff $ getCookie "XSRF-TOKEN"
   case mCook of
-   Nothing -> pure Nothing
-   Just cook -> pure $ Just $ (defaultRequest {headers = [RequestHeader "X-XSRF-TOKEN" cook]})
+   Nothing   -> pure Nothing
+   Just cook -> 
+     pure $ 
+       Just $ 
+         defaultRequest { headers = 
+                           [ RequestHeader "X-XSRF-TOKEN" cook
+                           , Accept (MediaType "*/*")
+                           , ContentType (MediaType "application/json")
+                           ]}
 
-authorizedRequest :: forall eff. Method -> URL -> Eff (console :: CONSOLE, cookie :: COOKIE, ajax :: AJAX, exception :: EXCEPTION | eff) (Unit)
-authorizedRequest method url = void $ launchAff do
-  mAuthRequest <- liftEff mkAuthRequest
-  case mAuthRequest of
-    Nothing -> pure unit
-    Just authRequest  -> do
-      msg <- affjax $ authRequest { url = url, method = Left method }
-      liftEff $ log msg.response
+authorizedGet :: forall e b. Respondable b => (AffjaxRequest Unit) -> URL -> Affjax e b
+authorizedGet request url = affjax $ request { method = Left GET, url = url}
 
-authorizedGet :: forall eff. URL -> Eff (console :: CONSOLE, cookie :: COOKIE, ajax :: AJAX, exception :: EXCEPTION | eff) (Unit)
-authorizedGet url = authorizedRequest GET url
-
-authorizedPost :: forall eff. URL -> Eff (console :: CONSOLE, cookie :: COOKIE,  ajax :: AJAX, exception :: EXCEPTION | eff) (Unit)
-authorizedPost url = authorizedRequest POST url
-
-authPost :: forall e b. Respondable b => URL -> String -> Affjax e b
-authPost url content = affjax $ defaultRequest { method = Left POST, url = url, content = Just ( content)}
+post :: forall e a b. EncodeJson a => Respondable b => URL -> a -> Affjax e b
+post url content = 
+  affjax $ 
+    defaultRequest { method = Left POST
+                   , url = url
+                   , content = Just (show $ encodeJson content)
+                   , headers = 
+                     [ Accept (MediaType "*/*")
+                     , ContentType (MediaType "application/json")
+                     ]
+                   }
 
 
-
-data Event = Echo
-           | SignIn
+data Event = LoginRequest
+           | LoginResponse Boolean
+           | LogoutRequest 
+           | LogoutResponse
+           | RollDieRequest
+           | RollDieResponse String
            | UsernameChange DOMEvent
            | PasswordChange DOMEvent
-           
+
 type State = 
   { username :: String
   , password :: String
+  , loggedin :: Boolean
+  , rollmessage :: String
   }
 
 -- | Return a new state (and effects) from each event
-foldp :: Event -> State -> EffModel State Event (ajax :: AJAX, console :: CONSOLE)
-foldp Echo state = 
-  { state: state
-    , effects: [ do 
-      liftEff $ log "Hello!" 
-      pure Nothing
-    ]
-  }
-foldp SignIn st = 
-  { state : st
-    , effects : [do 
-      res <- attempt (post "/login" (show $ encodeJson $ Login {username: st.username, password: st.password}))
-      let decode r = decodeJson r.response :: Either String String
-      let todos = either (Left <<< show) decode res
-      pure Nothing 
-    ]
-  }
-foldp (UsernameChange ev) st = noEffects $ st { username = targetValue ev }
-foldp (PasswordChange ev) st = noEffects $ st { password = targetValue ev }
+foldp :: Event -> State -> EffModel State Event (ajax :: AJAX, console :: CONSOLE, cookie :: COOKIE)
+foldp LoginRequest st = onlyEffects st [ do
+    let login = Login {username: st.username, password: st.password}
+    eRes :: (Either Error (AffjaxResponse String)) <- attempt (post "/login" login)
+    case eRes of
+      Left  _ -> pure $ Just $ LoginResponse false
+      Right _ -> pure $ Just $ LoginResponse true
+  ]
 
---foldp Increment n = { state: n + 1, effects: [ log ("increment " <> show n) *> pure Nothing ] }
---foldp Decrement n = { state: n - 1, effects: [] }
+foldp (LoginResponse loggedin) st = noEffects $ st { loggedin = loggedin }
+
+foldp LogoutRequest st = onlyEffects st [ do
+    liftEff $ deleteCookie "XSRF-TOKEN"
+    pure $ Just LogoutResponse
+  ]
+
+foldp LogoutResponse st = noEffects $ st { loggedin = false }
+
+foldp RollDieRequest st = onlyEffects st [ do 
+    mReq <- liftEff mkAuthRequest
+    case mReq of
+      Nothing -> pure $ Just $ RollDieResponse "You are not logged in. You cannot request a die roll."
+      Just req -> do             
+        eRes :: (Either Error (AffjaxResponse String)) <- attempt $ authorizedGet req "/die/roll"
+        case eRes of
+          Left  _   -> pure $ Just $ RollDieResponse "Unable to request a die roll from the server."
+          Right res -> pure $ Just $ RollDieResponse ("You rolled a " <> res.response <> "!")
+  ]
+
+foldp (RollDieResponse s) st = noEffects $ st { rollmessage = s }
+
+foldp (UsernameChange ev) st = noEffects $ st { username = targetValue ev }
+
+foldp (PasswordChange ev) st = noEffects $ st { password = targetValue ev }
 
 -- | Return markup from the state
 view :: State -> HTML Event
 view state = do
   div $
-    button #! onClick (const Echo) $ text "Echo"
-    
-  form ! name "signin" #! onSubmit (const SignIn) $ do
-    input ! type' "text" ! value state.username #! onChange UsernameChange
-    input ! type' "password" ! value state.password #! onChange PasswordChange
-    button ! type' "submit" $ text "Sign In"
+    if state.loggedin 
+      then span $ text "You are logged in."
+      else do 
+        div $ text "You are logged out."
+        div $ text "Try logging in with email: \"test@test.com\" and password: \"password\"."
+  
+  div $ 
+    if state.loggedin
+      then
+        button #! onClick (const LogoutRequest) $ text "Log out"
+      else
+        div do
+          div do
+            label $ text "email"
+            input ! type' "text" ! value state.username #! onChange UsernameChange
+          div do 
+            label $ text "password"
+            input ! type' "password" ! value state.password #! onChange PasswordChange
+          button #! onClick (const LoginRequest) $ text "Log In"
+  
+  div do
+    div $ text "Request a die roll from the server."
+    button #! onClick (const RollDieRequest) $ text "Roll Die"
+    div $ text state.rollmessage
 
 init :: State
-init = { username : "", password : "" }
+init = { username : "", password : "", loggedin : false, rollmessage : "" }
 
 -- | Start and render the app
-main :: Eff (CoreEffects (ajax :: AJAX, console :: CONSOLE)) Unit
-main = do
-  app <- start
-    { initialState: init
-    , view
-    , foldp
-    , inputs: []
-    }
-  renderToDOM "#app" app.markup app.input
+main :: Eff (CoreEffects (ajax :: AJAX, console :: CONSOLE, cookie :: COOKIE, exception :: EXCEPTION)) Unit
+main =  void $ launchAff do
+  mReq <- liftEff mkAuthRequest
+ 
+  newInit <- case mReq of
+    Nothing -> pure init
+    Just req -> do             
+      eRes :: (Either Error (AffjaxResponse Unit)) <- attempt $ authorizedGet req "/loggedin"
+      liftEff $ 
+        either 
+          (const $ pure init) 
+          (\res -> if res.status == (StatusCode 200) then pure init { loggedin = true } else pure init) 
+          eRes
+
+  app <- liftEff $ start
+          { initialState: newInit
+          , view
+          , foldp
+          , inputs: []
+          }
+  
+  liftEff $ renderToDOM "#app" app.markup app.input
