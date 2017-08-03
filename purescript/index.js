@@ -24865,8 +24865,7 @@ var PS = {};
   };
   var responseType = function (dict) {
       return dict.responseType;
-  };                                                                                                                                                                                                                                                        
-  var responsableString = new Respondable(Data_Foreign.readString, new Data_Tuple.Tuple(Data_Maybe.Nothing.value, StringResponse.value));
+  };                                                                                                                                     
   var responsableJson = new Respondable(function ($8) {
       return Control_Applicative.pure(Control_Monad_Except_Trans.applicativeExceptT(Data_Identity.monadIdentity))(Unsafe_Coerce.unsafeCoerce($8));
   }, new Data_Tuple.Tuple(new Data_Maybe.Just(Data_MediaType_Common.applicationJSON), JSONResponse.value));                                                             
@@ -24882,7 +24881,6 @@ var PS = {};
   exports["fromResponse"] = fromResponse;
   exports["responseType"] = responseType;
   exports["responseTypeToString"] = responseTypeToString;
-  exports["responsableString"] = responsableString;
   exports["responsableJson"] = responsableJson;
 })(PS["Network.HTTP.Affjax.Response"] = PS["Network.HTTP.Affjax.Response"] || {});
 (function(exports) {
@@ -26164,6 +26162,7 @@ var PS = {};
   var Control_Applicative = PS["Control.Applicative"];
   var Control_Bind = PS["Control.Bind"];
   var Control_Monad_Aff = PS["Control.Monad.Aff"];
+  var Control_Monad_Aff_Class = PS["Control.Monad.Aff.Class"];
   var Control_Monad_Eff = PS["Control.Monad.Eff"];
   var Control_Monad_Eff_Class = PS["Control.Monad.Eff.Class"];
   var Control_Monad_Eff_Console = PS["Control.Monad.Eff.Console"];
@@ -26178,7 +26177,6 @@ var PS = {};
   var Data_Argonaut_Encode_Combinators = PS["Data.Argonaut.Encode.Combinators"];
   var Data_Either = PS["Data.Either"];
   var Data_Function = PS["Data.Function"];
-  var Data_Functor = PS["Data.Functor"];
   var Data_HTTP_Method = PS["Data.HTTP.Method"];
   var Data_Maybe = PS["Data.Maybe"];
   var Data_MediaType = PS["Data.MediaType"];
@@ -26247,34 +26245,50 @@ var PS = {};
       RollDie.value = new RollDie();
       return RollDie;
   })();
+  var IsLoggedIn = (function () {
+      function IsLoggedIn() {
+
+      };
+      IsLoggedIn.value = new IsLoggedIn();
+      return IsLoggedIn;
+  })();
+  var Echo = (function () {
+      function Echo() {
+
+      };
+      Echo.value = new Echo();
+      return Echo;
+  })();
   var view = function (state) {
-      return Control_Bind.discard(Control_Bind.discardUnit)(Text_Smolder_Markup.bindMarkupM)(Text_Smolder_HTML.div(Control_Bind.discard(Control_Bind.discardUnit)(Text_Smolder_Markup.bindMarkupM)(Text_Smolder_HTML.div(Control_Bind.discard(Control_Bind.discardUnit)(Text_Smolder_Markup.bindMarkupM)(Text_Smolder_HTML.label(Text_Smolder_Markup.text("email")))(function () {
-          return Text_Smolder_Markup.withEvent(Text_Smolder_Markup.eventableMarkupM)(Text_Smolder_Markup["with"](Text_Smolder_Markup.attributableMarkupM)(Text_Smolder_Markup["with"](Text_Smolder_Markup.attributableMarkupM)(Text_Smolder_HTML.input)(Text_Smolder_HTML_Attributes["type'"]("text")))(Text_Smolder_HTML_Attributes.value(state.username)))(Pux_DOM_Events.onChange(UsernameChange.create));
-      })))(function () {
-          return Control_Bind.discard(Control_Bind.discardUnit)(Text_Smolder_Markup.bindMarkupM)(Text_Smolder_HTML.div(Control_Bind.discard(Control_Bind.discardUnit)(Text_Smolder_Markup.bindMarkupM)(Text_Smolder_HTML.label(Text_Smolder_Markup.text("password")))(function () {
-              return Text_Smolder_Markup.withEvent(Text_Smolder_Markup.eventableMarkupM)(Text_Smolder_Markup["with"](Text_Smolder_Markup.attributableMarkupM)(Text_Smolder_Markup["with"](Text_Smolder_Markup.attributableMarkupM)(Text_Smolder_HTML.input)(Text_Smolder_HTML_Attributes["type'"]("password")))(Text_Smolder_HTML_Attributes.value(state.password)))(Pux_DOM_Events.onChange(PasswordChange.create));
+      return Control_Bind.discard(Control_Bind.discardUnit)(Text_Smolder_Markup.bindMarkupM)(Text_Smolder_HTML.div(Text_Smolder_Markup.withEvent(Text_Smolder_Markup.eventableMarkupMF)(Text_Smolder_HTML.button)(Pux_DOM_Events.onClick(Data_Function["const"](Echo.value)))(Text_Smolder_Markup.text("Echo"))))(function () {
+          return Control_Bind.discard(Control_Bind.discardUnit)(Text_Smolder_Markup.bindMarkupM)(Text_Smolder_HTML.div(Control_Bind.discard(Control_Bind.discardUnit)(Text_Smolder_Markup.bindMarkupM)(Text_Smolder_HTML.div(Control_Bind.discard(Control_Bind.discardUnit)(Text_Smolder_Markup.bindMarkupM)(Text_Smolder_HTML.label(Text_Smolder_Markup.text("email")))(function () {
+              return Text_Smolder_Markup.withEvent(Text_Smolder_Markup.eventableMarkupM)(Text_Smolder_Markup["with"](Text_Smolder_Markup.attributableMarkupM)(Text_Smolder_Markup["with"](Text_Smolder_Markup.attributableMarkupM)(Text_Smolder_HTML.input)(Text_Smolder_HTML_Attributes["type'"]("text")))(Text_Smolder_HTML_Attributes.value(state.username)))(Pux_DOM_Events.onChange(UsernameChange.create));
           })))(function () {
-              return Text_Smolder_Markup.withEvent(Text_Smolder_Markup.eventableMarkupMF)(Text_Smolder_HTML.button)(Pux_DOM_Events.onClick(Data_Function["const"](SignIn.value)))(Text_Smolder_Markup.text("Sign In"));
+              return Control_Bind.discard(Control_Bind.discardUnit)(Text_Smolder_Markup.bindMarkupM)(Text_Smolder_HTML.div(Control_Bind.discard(Control_Bind.discardUnit)(Text_Smolder_Markup.bindMarkupM)(Text_Smolder_HTML.label(Text_Smolder_Markup.text("password")))(function () {
+                  return Text_Smolder_Markup.withEvent(Text_Smolder_Markup.eventableMarkupM)(Text_Smolder_Markup["with"](Text_Smolder_Markup.attributableMarkupM)(Text_Smolder_Markup["with"](Text_Smolder_Markup.attributableMarkupM)(Text_Smolder_HTML.input)(Text_Smolder_HTML_Attributes["type'"]("password")))(Text_Smolder_HTML_Attributes.value(state.password)))(Pux_DOM_Events.onChange(PasswordChange.create));
+              })))(function () {
+                  return Text_Smolder_Markup.withEvent(Text_Smolder_Markup.eventableMarkupMF)(Text_Smolder_HTML.button)(Pux_DOM_Events.onClick(Data_Function["const"](SignIn.value)))(Text_Smolder_Markup.text("Sign In"));
+              });
+          })))(function () {
+              return Text_Smolder_HTML.div(Text_Smolder_Markup.withEvent(Text_Smolder_Markup.eventableMarkupMF)(Text_Smolder_HTML.button)(Pux_DOM_Events.onClick(Data_Function["const"](RollDie.value)))(Text_Smolder_Markup.text("Roll Die")));
           });
-      })))(function () {
-          return Text_Smolder_HTML.div(Text_Smolder_Markup.withEvent(Text_Smolder_Markup.eventableMarkupMF)(Text_Smolder_HTML.button)(Pux_DOM_Events.onClick(Data_Function["const"](RollDie.value)))(Text_Smolder_Markup.text("Roll Die")));
       });
   };
   var post = function (dictRespondable) {
       return function (url) {
           return function (content) {
               return Network_HTTP_Affjax.affjax(Network_HTTP_Affjax_Request.requestableString)(dictRespondable)((function () {
-                  var $24 = {};
-                  for (var $25 in Network_HTTP_Affjax.defaultRequest) {
-                      if ({}.hasOwnProperty.call(Network_HTTP_Affjax.defaultRequest, $25)) {
-                          $24[$25] = Network_HTTP_Affjax["defaultRequest"][$25];
+                  var $23 = {};
+                  for (var $24 in Network_HTTP_Affjax.defaultRequest) {
+                      if ({}.hasOwnProperty.call(Network_HTTP_Affjax.defaultRequest, $24)) {
+                          $23[$24] = Network_HTTP_Affjax["defaultRequest"][$24];
                       };
                   };
-                  $24.method = new Data_Either.Left(Data_HTTP_Method.POST.value);
-                  $24.url = url;
-                  $24.content = new Data_Maybe.Just(content);
-                  $24.headers = [ new Network_HTTP_RequestHeader.Accept("*/*"), new Network_HTTP_RequestHeader.ContentType("application/json") ];
-                  return $24;
+                  $23.method = new Data_Either.Left(Data_HTTP_Method.POST.value);
+                  $23.url = url;
+                  $23.content = new Data_Maybe.Just(content);
+                  $23.headers = [ new Network_HTTP_RequestHeader.Accept("*/*"), new Network_HTTP_RequestHeader.ContentType("application/json") ];
+                  return $23;
               })());
           };
       };
@@ -26286,17 +26300,17 @@ var PS = {};
       };
       if (v instanceof Data_Maybe.Just) {
           return Data_Maybe.Just.create((function () {
-              var $29 = {};
-              for (var $30 in Network_HTTP_Affjax.defaultRequest) {
-                  if ({}.hasOwnProperty.call(Network_HTTP_Affjax.defaultRequest, $30)) {
-                      $29[$30] = Network_HTTP_Affjax["defaultRequest"][$30];
+              var $28 = {};
+              for (var $29 in Network_HTTP_Affjax.defaultRequest) {
+                  if ({}.hasOwnProperty.call(Network_HTTP_Affjax.defaultRequest, $29)) {
+                      $28[$29] = Network_HTTP_Affjax["defaultRequest"][$29];
                   };
               };
-              $29.headers = [ new Network_HTTP_RequestHeader.RequestHeader("X-XSRF-TOKEN", v.value0), new Network_HTTP_RequestHeader.Accept("*/*"), new Network_HTTP_RequestHeader.ContentType("application/json") ];
-              return $29;
+              $28.headers = [ new Network_HTTP_RequestHeader.RequestHeader("X-XSRF-TOKEN", v.value0), new Network_HTTP_RequestHeader.Accept("*/*"), new Network_HTTP_RequestHeader.ContentType("application/json") ];
+              return $28;
           })());
       };
-      throw new Error("Failed pattern match at Main line 74, column 3 - line 83, column 30: " + [ v.constructor.name ]);
+      throw new Error("Failed pattern match at Main line 75, column 3 - line 84, column 30: " + [ v.constructor.name ]);
   };
   var init = {
       username: "", 
@@ -26332,50 +26346,33 @@ var PS = {};
           });
       });
   });
-  var authorizedRequest = function (method) {
-      return function (url) {
-          return Data_Functor["void"](Control_Monad_Eff.functorEff)(Control_Monad_Aff.launchAff(Control_Bind.bind(Control_Monad_Aff.bindAff)(Control_Monad_Eff_Class.liftEff(Control_Monad_Aff.monadEffAff)(mkAuthRequest))(function (v) {
-              if (v instanceof Data_Maybe.Nothing) {
-                  return Control_Applicative.pure(Control_Monad_Aff.applicativeAff)(Data_Unit.unit);
-              };
-              if (v instanceof Data_Maybe.Just) {
-                  return Control_Bind.bind(Control_Monad_Aff.bindAff)(Network_HTTP_Affjax.affjax(Network_HTTP_Affjax_Request.requestableUnit)(Network_HTTP_Affjax_Response.responsableString)((function () {
-                      var $45 = {};
-                      for (var $46 in v.value0) {
-                          if ({}.hasOwnProperty.call(v.value0, $46)) {
-                              $45[$46] = v["value0"][$46];
-                          };
-                      };
-                      $45.url = url;
-                      $45.method = new Data_Either.Left(method);
-                      return $45;
-                  })()))(function (v1) {
-                      return Control_Monad_Eff_Class.liftEff(Control_Monad_Aff.monadEffAff)(Control_Monad_Eff_Console.log(v1.response));
-                  });
-              };
-              throw new Error("Failed pattern match at Main line 88, column 3 - line 92, column 33: " + [ v.constructor.name ]);
-          })));
-      };
-  };
   var authorizedGet = function (dictRespondable) {
       return function (request) {
           return function (url) {
               return Network_HTTP_Affjax.affjax(Network_HTTP_Affjax_Request.requestableUnit)(dictRespondable)((function () {
-                  var $50 = {};
-                  for (var $51 in request) {
-                      if ({}.hasOwnProperty.call(request, $51)) {
-                          $50[$51] = request[$51];
+                  var $42 = {};
+                  for (var $43 in request) {
+                      if ({}.hasOwnProperty.call(request, $43)) {
+                          $42[$43] = request[$43];
                       };
                   };
-                  $50.method = new Data_Either.Left(Data_HTTP_Method.GET.value);
-                  $50.url = url;
-                  return $50;
+                  $42.method = new Data_Either.Left(Data_HTTP_Method.GET.value);
+                  $42.url = url;
+                  return $42;
               })());
           };
       };
   };
   var foldp = function (v) {
       return function (st) {
+          if (v instanceof Echo) {
+              return {
+                  state: st, 
+                  effects: [ Control_Bind.discard(Control_Bind.discardUnit)(Control_Monad_Aff.bindAff)(Control_Monad_Eff_Class.liftEff(Control_Monad_Aff.monadEffAff)(Control_Monad_Eff_Console.log("Echo")))(function () {
+                      return Control_Applicative.pure(Control_Monad_Aff.applicativeAff)(new Data_Maybe.Just(Echo.value));
+                  }) ]
+              };
+          };
           if (v instanceof RollDie) {
               return {
                   state: st, 
@@ -26389,13 +26386,13 @@ var PS = {};
                                   var decode = function (r) {
                                       return Data_Argonaut_Decode_Class.decodeJson(Data_Argonaut_Decode_Class.decodeJsonInt)(r.response);
                                   };
-                                  var todos = Data_Either.either(function ($69) {
-                                      return Data_Either.Left.create(Data_Show.show(Control_Monad_Eff_Exception.showError)($69));
+                                  var todos = Data_Either.either(function ($65) {
+                                      return Data_Either.Left.create(Data_Show.show(Control_Monad_Eff_Exception.showError)($65));
                                   })(decode)(v2);
                                   return Control_Monad_Eff_Class.liftEff(Control_Monad_Aff.monadEffAff)(Control_Monad_Eff_Console.log(Data_Show.show(Data_Either.showEither(Data_Show.showString)(Data_Show.showInt))(todos)));
                               });
                           };
-                          throw new Error("Failed pattern match at Main line 126, column 7 - line 133, column 37: " + [ v1.constructor.name ]);
+                          throw new Error("Failed pattern match at Main line 127, column 7 - line 134, column 37: " + [ v1.constructor.name ]);
                       })())(function () {
                           return Control_Applicative.pure(Control_Monad_Aff.applicativeAff)(Data_Maybe.Nothing.value);
                       });
@@ -26414,8 +26411,8 @@ var PS = {};
                           var decode = function (r) {
                               return Data_Argonaut_Decode_Class.decodeJson(Data_Argonaut_Decode_Class.decodeJsonString)(r.response);
                           };
-                          var todos = Data_Either.either(function ($70) {
-                              return Data_Either.Left.create(Data_Show.show(Control_Monad_Eff_Exception.showError)($70));
+                          var todos = Data_Either.either(function ($66) {
+                              return Data_Either.Left.create(Data_Show.show(Control_Monad_Eff_Exception.showError)($66));
                           })(decode)(v1);
                           return Control_Applicative.pure(Control_Monad_Aff.applicativeAff)(Data_Maybe.Nothing.value);
                       });
@@ -26424,29 +26421,55 @@ var PS = {};
           };
           if (v instanceof UsernameChange) {
               return Pux.noEffects((function () {
-                  var $60 = {};
-                  for (var $61 in st) {
-                      if ({}.hasOwnProperty.call(st, $61)) {
-                          $60[$61] = st[$61];
+                  var $52 = {};
+                  for (var $53 in st) {
+                      if ({}.hasOwnProperty.call(st, $53)) {
+                          $52[$53] = st[$53];
                       };
                   };
-                  $60.username = Pux_DOM_Events.targetValue(v.value0);
-                  return $60;
+                  $52.username = Pux_DOM_Events.targetValue(v.value0);
+                  return $52;
               })());
           };
           if (v instanceof PasswordChange) {
               return Pux.noEffects((function () {
-                  var $64 = {};
-                  for (var $65 in st) {
-                      if ({}.hasOwnProperty.call(st, $65)) {
-                          $64[$65] = st[$65];
+                  var $56 = {};
+                  for (var $57 in st) {
+                      if ({}.hasOwnProperty.call(st, $57)) {
+                          $56[$57] = st[$57];
                       };
                   };
-                  $64.password = Pux_DOM_Events.targetValue(v.value0);
-                  return $64;
+                  $56.password = Pux_DOM_Events.targetValue(v.value0);
+                  return $56;
               })());
           };
-          throw new Error("Failed pattern match at Main line 121, column 1 - line 121, column 101: " + [ v.constructor.name, st.constructor.name ]);
+          if (v instanceof IsLoggedIn) {
+              return {
+                  state: st, 
+                  effects: [ Control_Bind.bind(Control_Monad_Aff.bindAff)(Control_Monad_Eff_Class.liftEff(Control_Monad_Aff.monadEffAff)(mkAuthRequest))(function (v1) {
+                      return Control_Bind.discard(Control_Bind.discardUnit)(Control_Monad_Aff.bindAff)((function () {
+                          if (v1 instanceof Data_Maybe.Nothing) {
+                              return Control_Monad_Eff_Class.liftEff(Control_Monad_Aff.monadEffAff)(Control_Monad_Eff_Console.log("cookie doesn't exist"));
+                          };
+                          if (v1 instanceof Data_Maybe.Just) {
+                              return Control_Bind.bind(Control_Monad_Aff.bindAff)(Control_Monad_Aff.attempt(authorizedGet(Network_HTTP_Affjax_Response.responsableJson)(v1.value0)("/loggedin")))(function (v2) {
+                                  var decode = function (r) {
+                                      return Data_Argonaut_Decode_Class.decodeJson(decodeJsonUser)(r.response);
+                                  };
+                                  var eUser = Data_Either.either(function ($67) {
+                                      return Data_Either.Left.create(Data_Show.show(Control_Monad_Eff_Exception.showError)($67));
+                                  })(decode)(v2);
+                                  return Control_Applicative.pure(Control_Monad_Aff.applicativeAff)(Data_Unit.unit);
+                              });
+                          };
+                          throw new Error("Failed pattern match at Main line 157, column 7 - line 164, column 20: " + [ v1.constructor.name ]);
+                      })())(function () {
+                          return Control_Applicative.pure(Control_Monad_Aff.applicativeAff)(Data_Maybe.Nothing.value);
+                      });
+                  }) ]
+              };
+          };
+          throw new Error("Failed pattern match at Main line 115, column 1 - line 115, column 101: " + [ v.constructor.name, st.constructor.name ]);
       };
   };
   var main = function __do() {
@@ -26462,10 +26485,11 @@ var PS = {};
   exports["PasswordChange"] = PasswordChange;
   exports["SignIn"] = SignIn;
   exports["RollDie"] = RollDie;
+  exports["IsLoggedIn"] = IsLoggedIn;
+  exports["Echo"] = Echo;
   exports["Login"] = Login;
   exports["User"] = User;
   exports["authorizedGet"] = authorizedGet;
-  exports["authorizedRequest"] = authorizedRequest;
   exports["foldp"] = foldp;
   exports["init"] = init;
   exports["main"] = main;

@@ -104,6 +104,7 @@ data Event = UsernameChange DOMEvent
            | SignIn
            | RollDie
            | IsLoggedIn
+           | Echo
            
 type State = 
   { username :: String
@@ -112,6 +113,13 @@ type State =
 
 -- | Return a new state (and effects) from each event
 foldp :: Event -> State -> EffModel State Event (ajax :: AJAX, console :: CONSOLE, cookie :: COOKIE)
+foldp Echo st =
+  { state : st 
+  , effects : [do 
+    liftEff $ log "Echo"
+    pure $ Just Echo
+  ]}
+
 foldp RollDie st = 
   { state : st
   , effects : [ do 
@@ -134,7 +142,7 @@ foldp SignIn st =
       res <- attempt (post "/login" login)
       let decode r = decodeJson r.response :: Either String String
       let todos = either (Left <<< show) decode res
-      pure Nothing 
+      pure Nothing
     ]
   }
   
@@ -162,6 +170,8 @@ foldp IsLoggedIn st =
 -- | Return markup from the state
 view :: State -> HTML Event
 view state = do
+  div do 
+    button #! onClick (const Echo) $ text "Echo"
   div do
     div do
       label $ text "email"
