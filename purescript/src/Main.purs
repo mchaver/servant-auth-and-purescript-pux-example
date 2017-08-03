@@ -6,7 +6,7 @@ import Control.Monad.Aff (attempt, launchAff)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Class (liftEff)
 import Control.Monad.Eff.Console (CONSOLE, log)
-import Control.Monad.Eff.Exception (EXCEPTION)
+import Control.Monad.Eff.Exception (Error, EXCEPTION)
 
 import Data.Argonaut.Core (jsonEmptyObject)
 import Data.Argonaut.Decode (class DecodeJson, decodeJson, (.?))
@@ -16,10 +16,10 @@ import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..))
 import Data.MediaType (MediaType(..))
 
-import Network.HTTP.Affjax (AJAX, Affjax, AffjaxRequest, URL, defaultRequest, affjax)
-import Network.HTTP.RequestHeader (RequestHeader(..))
-
+import Network.HTTP.Affjax (AJAX, Affjax, AffjaxResponse, AffjaxRequest, URL, defaultRequest, affjax)
 import Network.HTTP.Affjax.Response (class Respondable)
+import Network.HTTP.RequestHeader (RequestHeader(..))
+import Network.HTTP.StatusCode (StatusCode(..))
 
 import Pux (CoreEffects, EffModel, start, noEffects)
 import Pux.DOM.Events (DOMEvent, onClick, onChange, targetValue)
@@ -107,6 +107,7 @@ data Event = UsernameChange DOMEvent
 type State = 
   { username :: String
   , password :: String
+  , loggedin :: Boolean
   }
 
 -- | Return a new state (and effects) from each event
@@ -172,21 +173,22 @@ view state = do
     button #! onClick (const RollDie) $ text "Roll Die"
 
 init :: State
-init = { username : "", password : "" }
+init = { username : "", password : "", loggedin : false }
 
 -- | Start and render the app
 main :: Eff (CoreEffects (ajax :: AJAX, console :: CONSOLE, cookie :: COOKIE, exception :: EXCEPTION)) Unit
 main =  void $ launchAff do
-
   mReq <- liftEff mkAuthRequest
  
   newInit <- case mReq of
-        Nothing -> pure init
-        Just req -> do             
-          res <- attempt $ authorizedGet req "/loggedin"
-          let decode r = decodeJson r.response :: Either String String
-          let todos = either (Left <<< show) decode res
-          pure init
+    Nothing -> pure init
+    Just req -> do             
+      eRes :: (Either Error (AffjaxResponse Unit)) <- attempt $ authorizedGet req "/loggedin"
+      liftEff $ 
+        either 
+          (const $ pure init) 
+          (\res -> if res.status == (StatusCode 200) then pure init { loggedin = true } else pure init) 
+          eRes
 
   app <- liftEff $ start
           { initialState: newInit
